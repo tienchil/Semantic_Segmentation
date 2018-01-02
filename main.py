@@ -78,7 +78,7 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
 
     combined_layer2 = tf.add(combined_output, conv_1x1)
 
-    output = tf.layers.conv2d_transpose(combined_layer2, num_classes, 4, 8, padding='same',
+    output = tf.layers.conv2d_transpose(combined_layer2, num_classes, 16, 8, padding='same',
                                 kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3),
                                 kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
 
@@ -131,8 +131,10 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
             _, loss = sess.run([train_op, cross_entropy_loss], 
                              feed_dict={input_image: image,
                                         correct_label: label,
-                                        keep_prob: 0.7,
+                                        keep_prob: 0.5,
                                         learning_rate: 0.001})
+            # reg_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+            # loss += sum(reg_losses)
             print("LOSS= {}".format(loss))
     
 tests.test_train_nn(train_nn)
@@ -166,11 +168,11 @@ def run():
         layer_output = layers(layer3_out, layer4_out, layer7_out, num_classes)
         
         learning_rate = tf.placeholder(tf.float32)
-        correct_label = tf.placeholder(tf.float32, [None, image_shape[0], image_shape[1], num_classes])
+        correct_label = tf.placeholder(tf.float32, [None, None, None, num_classes])
         logits, training_operation, cross_entropy_loss = optimize(layer_output, correct_label, learning_rate, num_classes)
 
         # TODO: Train NN using the train_nn function
-        train_nn(sess, 10, 8, get_batches_fn, training_operation, 
+        train_nn(sess, 20, 2, get_batches_fn, training_operation, 
                  cross_entropy_loss, input_image, correct_label, keep_prob, learning_rate)
 
         # TODO: Save inference data using helper.save_inference_samples
